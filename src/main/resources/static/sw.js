@@ -1,9 +1,11 @@
-const CACHE_NAME = 'flowcast-v3-mobile';
+const CACHE_NAME = 'flowcast-v4-dock';
 const STATIC_ASSETS = [
   '/',
   '/traffic',
   '/css/app.css',
   '/js/app.js',
+  '/js/animated-top-dock.bundle.js',
+  '/js/animated-top-dock.bundle.css',
   '/manifest.webmanifest',
   '/icon.svg'
 ];

@@ -11,7 +11,16 @@
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="icon" type="image/svg+xml" href="/icon.svg">
     <link rel="apple-touch-icon" href="/icon.svg">
-    <link rel="stylesheet" href="/css/app.css?v=2.2">
+    <script>
+      // Clear legacy service worker caches to ensure immediate asset updates
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          for (const reg of regs) reg.unregister();
+        });
+      }
+    </script>
+    <link rel="stylesheet" href="/js/animated-top-dock-v3.bundle.css">
+    <link rel="stylesheet" href="/css/app.css?v=3.1">
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
     <title>FlowCast 2.0 | Personal Commute Decision Assistant</title>
 </head>
@@ -20,23 +29,12 @@
     ⚠️ Offline mode. Live traffic updates paused.
 </div>
 
-<header class="topbar">
-    <div class="brand-group">
-        <a class="brand" href="/">FLOW<span>CAST</span></a>
-        <span class="version-tag">2.0</span>
-    </div>
-    <nav class="desktop-nav" aria-label="Primary navigation">
-        <a href="#commute-planner-section">Commute Planner</a>
-        <a href="#saved-commutes-section">My Commutes</a>
-        <a href="#map-section">Live Map</a>
-        <a href="#hazards-section">Road Hazards</a>
-        <a href="#sources-section">Sources</a>
-    </nav>
-    <div class="topbar-actions">
-        <button id="alert-permission-btn" class="button button-small button-outline" type="button" title="Get alerts when your commute departure time changes">🔔 <span class="hide-on-mobile">Alerts</span></button>
-        <span id="network-status" class="pill hide-on-mobile">Checking sources...</span>
-    </div>
-</header>
+<!-- AnimatedTopDock from ThreeUI (Command Bar modern variant) -->
+<div id="animated-top-dock-root"></div>
+<div style="display:none" aria-hidden="true">
+    <button id="alert-permission-btn" class="button button-small button-outline" type="button" title="Get alerts when your commute departure time changes">🔔 <span class="hide-on-mobile">Alerts</span></button>
+    <span id="network-status" class="pill hide-on-mobile">Live System Connected</span>
+</div>
 
 <main class="shell" id="main-content">
     <!-- Next Commute Spotlight Banner (Visible when user has saved active commutes) -->
@@ -455,7 +453,8 @@
     </a>
 </nav>
 
+<script src="/js/animated-top-dock-v3.bundle.js" defer></script>
 <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
-<script type="module" src="/js/app.js?v=2.2"></script>
+<script type="module" src="/js/app.js?v=3.0"></script>
 </body>
 </html>

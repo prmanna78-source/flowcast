@@ -1,0 +1,21 @@
+{
+  "name": "flowcast",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:dock": "esbuild src/shaders/animated-top-dock/entry.tsx --bundle --minify --sourcemap --outfile=src/main/resources/static/js/animated-top-dock-v3.bundle.js --alias:@designcodeio/threeui/style.css=./src/shaders/threeui.css --alias:@designcodeio/threeui=./src/shaders/animated-top-dock/AnimatedTopDock.tsx --loader:.woff2=file --jsx=automatic"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.128.0",
+    "three128": "npm:three@0.128.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.7.3"
+  }
+}

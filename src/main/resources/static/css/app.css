@@ -19,6 +19,27 @@ body { margin: 0; background: #08101d; }
   z-index: 100;
 }
 
+#animated-top-dock-root {
+  display: block;
+  width: 100%;
+  height: 440px;
+  position: relative;
+  z-index: 25;
+}
+
+.shader-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 440px;
+  background: #08090b;
+}
+
+.animated-top-dock-component {
+  min-height: 440px;
+  height: 100%;
+}
+
 .topbar {
   display: flex;
   align-items: center;
