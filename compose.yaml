@@ -1,0 +1,13 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: flowcast
+      POSTGRES_USER: flowcast
+      POSTGRES_PASSWORD: change-me
+    ports:
+      - "5432:5432"
+    volumes:
+      - flowcast-postgres:/var/lib/postgresql/data
+volumes:
+  flowcast-postgres:

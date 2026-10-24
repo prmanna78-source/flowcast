@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <meta name="theme-color" content="#0b1627">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FlowCast">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" type="image/svg+xml" href="/icon.svg">
+    <link rel="apple-touch-icon" href="/icon.svg">
+    <link rel="stylesheet" href="/css/app.css?v=2.1">
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+    <title>FlowCast 2.0 | Personal Commute Decision Assistant</title>
+</head>
+<body>
+<div id="offline-banner" class="offline-banner" style="display:none">
+    ⚠️ Offline mode. Live traffic updates paused.
+</div>
+
+<header class="topbar">
+    <div class="brand-group">
+        <a class="brand" href="/">FLOW<span>CAST</span></a>
+        <span class="version-tag">2.0</span>
+    </div>
+    <nav class="desktop-nav" aria-label="Primary navigation">
+        <a href="#commute-planner-section">Commute Planner</a>
+        <a href="#saved-commutes-section">My Commutes</a>
+        <a href="#map-section">Live Map</a>
+        <a href="#hazards-section">Road Hazards</a>
+        <a href="#sources-section">Sources</a>
+    </nav>
+    <div class="topbar-actions">
+        <button id="alert-permission-btn" class="button button-small button-outline" type="button" title="Get alerts when your commute departure time changes">🔔 <span class="hide-on-mobile">Alerts</span></button>
+        <span id="network-status" class="pill hide-on-mobile">Checking sources...</span>
+    </div>
+</header>
+
+<main class="shell" id="main-content">
+    <!-- Next Commute Spotlight Banner (Visible when user has saved active commutes) -->
+    <section id="next-commute-banner" class="next-commute-card" style="display: none;">
+        <div class="next-commute-header">
+            <div>
+                <span class="eyebrow">UPCOMING SCHEDULED COMMUTE</span>
+                <h2 id="next-commute-title">Home to College</h2>
+            </div>
+            <span id="next-commute-badge" class="exposure-badge">READY TO DEPART</span>
+        </div>
+        <div class="next-commute-body">
+            <div class="next-commute-main">
+                <div class="big-departure-stat">
+                    <small>RECOMMENDED DEPARTURE</small>
+                    <strong id="next-commute-departure">--:-- --</strong>
+                    <span id="next-commute-countdown" class="countdown-tag">-- min until departure</span>
+                </div>
+                <div class="next-commute-details">
+                    <p id="next-commute-route-text" class="route-path-line">From NAD Junction &rarr; GITAM University</p>
+                    <p class="source-line" id="next-commute-equation">Target arrival: <strong>09:00 AM</strong> &middot; Travel: <strong>32 min</strong> (incl. 5m traffic delay) &middot; Safety buffer: <strong>15 min</strong></p>
+                </div>
+            </div>
+            <div class="next-commute-actions">
+                <button id="next-commute-recalculate-btn" class="button button-small" type="button">🔄 Recalculate Live</button>
+                <button id="next-commute-feedback-btn" class="button button-small button-outline" type="button">📝 Trip Feedback</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- CORE WORKFLOW: Where do you need to be, and when do you need to arrive? -->
+    <section class="card planner-card" id="commute-planner-section">
+        <div class="card-head">
+            <div>
+                <span class="eyebrow">DAILY COMMUTE DECISION ENGINE</span>
+                <h2>Where do you need to be, and when do you need to arrive?</h2>
+            </div>
+            <span id="planner-status" class="status ready">Live Routing Active</span>
+        </div>
+        <p class="muted">Calculate your exact recommended departure time based on live traffic flow, corridor delays, road incidents, and your personal safety buffer.</p>
+
+        <!-- Quick Visakhapatnam Destination Shortcuts -->
+        <div class="landmark-chips" aria-label="Popular Visakhapatnam destinations">
+            <span class="chip-label">Quick destinations:</span>
+            <button type="button" class="chip" data-name="GITAM University, Rushikonda" data-lat="17.7815" data-lon="83.3768">🎓 GITAM (Rushikonda)</button>
+            <button type="button" class="chip" data-name="Andhra University, Maddilapalem" data-lat="17.7315" data-lon="83.3185">🏛️ Andhra University</button>
+            <button type="button" class="chip" data-name="Visakhapatnam Railway Station" data-lat="17.7215" data-lon="83.2985">🚉 Railway Station</button>
+            <button type="button" class="chip" data-name="Rushikonda IT SEZ" data-lat="17.7950" data-lon="83.3850">🏢 IT SEZ Rushikonda</button>
+            <button type="button" class="chip" data-name="RK Beach Road" data-lat="17.7125" data-lon="83.3215">🏖️ RK Beach</button>
+            <button type="button" class="chip" data-name="NAD Junction" data-lat="17.7475" data-lon="83.2185">🚏 NAD Junction</button>
+        </div>
+
+        <form id="commute-form" class="commute-form">
+            <div class="form-grid-top">
+                <div class="input-group">
+                    <div class="input-label-row">
+                        <label for="origin-query">Origin location or landmark</label>
+                        <button id="use-origin-btn" class="btn-text-link" type="button">📍 Use my location</button>
+                    </div>
+                    <input id="origin-query" type="search" autocomplete="off" placeholder="e.g. NAD Junction, Visakhapatnam" required>
+                    <div id="origin-suggestions" class="suggestions"></div>
+                </div>
+
+                <div class="input-group">
+                    <div class="input-label-row">
+                        <label for="destination-query">Destination location or campus</label>
+                    </div>
+                    <input id="destination-query" type="search" autocomplete="off" placeholder="e.g. GITAM University, Rushikonda" required>
+                    <div id="destination-suggestions" class="suggestions"></div>
+                </div>
+            </div>
+
+            <div class="form-grid-bottom">
+                <div class="input-group">
+                    <label for="target-arrival-time">Required Arrival Deadline</label>
+                    <input id="target-arrival-time" type="time" value="09:00" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="safety-buffer">Personal Safety Buffer</label>
+                    <select id="safety-buffer">
+                        <option value="5">5 minutes (Tight)</option>
+                        <option value="10">10 minutes (Standard)</option>
+                        <option value="15" selected>15 minutes (Recommended)</option>
+                        <option value="20">20 minutes (Cautious / Exam / Interview)</option>
+                    </select>
+                </div>
+
+                <div class="input-group form-actions">
+                    <button class="button button-primary button-large" type="submit">Calculate Recommended Departure</button>
+                </div>
+            </div>
+        </form>
+
+        <!-- PROMINENT DEPARTURE RECOMMENDATION RESULT CARD -->
+        <div id="departure-result-panel" class="departure-result-panel" style="display: none;">
+            <div class="result-banner">
+                <div class="result-main-callout">
+                    <span class="eyebrow">COMMUTE DECISION</span>
+                    <div class="leave-time-display">
+                        <strong id="rec-leave-time">LEAVE BY --:-- --</strong>
+                        <span id="rec-status-badge" class="exposure-badge">READY TO DEPART</span>
+                    </div>
+                    <p id="rec-headline-sentence" class="rec-sentence">Leave by 08:15 AM to arrive at destination by 09:00 AM.</p>
+                </div>
+                <div class="result-save-action">
+                    <button id="save-current-commute-btn" class="button button-outline" type="button">⭐ Save as Recurring Commute</button>
+                </div>
+            </div>
+
+            <!-- Mathematical Equation Strip -->
+            <div class="commute-equation-strip">
+                <div class="eq-node">
+                    <span class="eq-sub">RECOMMENDED DEPARTURE</span>
+                    <strong id="eq-departure">--:-- --</strong>
+                </div>
+                <div class="eq-operator">+</div>
+                <div class="eq-node">
+                    <span class="eq-sub">ESTIMATED TRAVEL TIME</span>
+                    <strong id="eq-travel-time">-- min</strong>
+                    <small id="eq-traffic-delay" class="eq-note">incl. 0m traffic delay</small>
+                </div>
+                <div class="eq-operator">+</div>
+                <div class="eq-node">
+                    <span class="eq-sub">SAFETY BUFFER</span>
+                    <strong id="eq-buffer">15 min</strong>
+                    <small class="eq-note">configured buffer</small>
+                </div>
+                <div class="eq-operator">=</div>
+                <div class="eq-node eq-goal">
+                    <span class="eq-sub">TARGET ARRIVAL</span>
+                    <strong id="eq-arrival">--:-- --</strong>
+                    <small class="eq-note">your chosen deadline</small>
+                </div>
+            </div>
+
+            <!-- Evidence-Backed Findings & Disruption Exposure -->
+            <div class="result-breakdown-grid">
+                <div class="breakdown-card">
+                    <h4>Evidence-Backed Findings:</h4>
+                    <ul id="rec-evidence-list" class="evidence-list"></ul>
+                </div>
+                <div class="breakdown-card">
+                    <h4>Corridor Environmental Factors:</h4>
+                    <div class="metric-pair">
+                        <span>Traffic Delay Ratio:</span>
+                        <strong id="rec-delay-ratio">0% of journey</strong>
+                    </div>
+                    <div class="metric-pair">
+                        <span>Corridor Incidents:</span>
+                        <strong id="rec-incidents-count">0 active disruptions</strong>
+                    </div>
+                    <div class="metric-pair">
+                        <span>Weather Conditions:</span>
+                        <strong id="rec-weather-factor">--</strong>
+                    </div>
+                    <div class="metric-pair">
+                        <span>Exposure Level:</span>
+                        <span id="rec-exposure-badge" class="exposure-badge-inline">LOWER</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculated Route Alternatives Comparison -->
+        <div id="route-alternatives-container" style="display: none; margin-top: 1.5rem;">
+            <h3>Available Route Alternatives</h3>
+            <div id="route-comparison-cards" class="route-comparison-grid"></div>
+        </div>
+    </section>
+
+    <!-- SAVED COMMUTES SECTION ("My Daily Journeys") -->
+    <section class="card saved-commutes-card" id="saved-commutes-section">
+        <div class="card-head">
+            <div>
+                <h2>My Saved Commutes</h2>
+                <span class="source-line">Monitor recurring daily journeys with real-time recalculation and arrival deadline protection.</span>
+            </div>
+            <button id="open-save-modal-btn" class="button button-small" type="button">+ New Saved Commute</button>
+        </div>
+        <div id="saved-commutes-list" class="saved-commutes-grid">
+            <div class="metric-empty">No saved commutes yet. Plan a commute above and click "Save as Recurring Commute" to monitor it daily.</div>
+        </div>
+    </section>
+
+    <!-- LIVE INTERACTIVE MAP SECTION -->
+    <section class="card map-card" id="map-section">
+        <div class="card-head">
+            <div>
+                <h2>Live traffic map &amp; route preview</h2>
+                <span class="source-line">Interactive road geometry centered on Visakhapatnam.</span>
+            </div>
+            <div class="map-controls">
+                <label class="control-label"><input id="traffic-toggle" type="checkbox" checked> Traffic overlay</label>
+                <label class="control-label"><input id="incidents-toggle" type="checkbox" checked> Incidents</label>
+                <label class="control-label"><input id="reports-toggle" type="checkbox" checked> Community</label>
+            </div>
+        </div>
+        <div id="map" class="map-placeholder">
+            <div><strong>Map provider status</strong><p id="map-status">Loading configured map…</p></div>
+        </div>
+        <div class="map-legend">
+            <span><span class="legend-dot dot-route"></span> Calculated Route</span>
+            <span><span class="legend-dot dot-traffic"></span> Live Traffic Flow</span>
+            <span><span class="legend-dot dot-incident"></span> Confirmed Incidents</span>
+            <span><span class="legend-dot dot-hazard"></span> Community Hazards</span>
+        </div>
+    </section>
+
+    <!-- SUPPORTING SERVICES GRID: Weather & Community Hazards -->
+    <section class="grid" id="hazards-section">
+        <!-- Weather Card (Contextual Factor for Commuters) -->
+        <article class="card">
+            <div class="card-head">
+                <h2>Commute Weather Context</h2>
+                <span id="weather-status" class="status">Loading</span>
+            </div>
+            <div id="weather" class="metric-empty">Waiting for Open-Meteo response…</div>
+            <p id="weather-meta" class="source-line">Open-Meteo &middot; Real-time observations &middot; Hourly forecast below</p>
+            <div id="weather-forecast-preview" class="forecast-pills"></div>
+        </article>
+
+        <!-- Community Road Hazard Reports Card -->
+        <article class="card">
+            <div class="card-head">
+                <div>
+                    <h2>Community Road Hazards</h2>
+                    <span class="source-line">Commuter-submitted potholes, flooding, closures.</span>
+                </div>
+                <button id="open-report-modal" class="button button-small" type="button">+ Report Hazard</button>
+            </div>
+            <div id="community-reports-list" class="reports-grid">
+                <div class="metric-empty">No community hazards submitted yet. Commuter submissions are currently empty.</div>
+            </div>
+        </article>
+    </section>
+
+    <!-- SUPPORTING SERVICES GRID: Source Health & ML Pipeline Readiness -->
+    <section class="grid" id="sources-section">
+        <!-- Detailed Source Health Transparency -->
+        <article class="card">
+            <div class="card-head">
+                <h2>Data Source Health &amp; Transparency</h2>
+                <button id="refresh-sources-btn" class="button button-small" type="button">Run Health Diagnostic</button>
+            </div>
+            <p class="source-line">Status and capabilities for each integrated data provider.</p>
+            <div id="sources" class="source-grid"></div>
+        </article>
+
+        <!-- FlowCast ML Forecast Readiness -->
+        <article class="card forecast" id="forecast-section">
+            <div class="card-head">
+                <h2>FlowCast Forecast Pipeline</h2>
+                <span id="forecast-status" class="status unavailable">Evaluating</span>
+            </div>
+            <p id="forecast-summary">Predictions remain disabled until authorized historical observations and a chronologically evaluated model are available.</p>
+            <div id="forecast-progress" class="readiness-box">
+                <div class="progress-bar-container"><div id="observations-bar" class="progress-bar" style="width: 0%"></div></div>
+                <div class="progress-label"><span id="obs-count-text">0 / 1000 genuine observations</span><span id="obs-percent-text">0%</span></div>
+            </div>
+            <ul id="readiness-criteria" class="criteria-list"></ul>
+        </article>
+    </section>
+</main>
+
+<!-- MODAL: Save Commute Profile -->
+<div id="save-commute-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
+        <div class="modal-header">
+            <h3>Save Commute Profile</h3>
+            <button id="close-save-modal" class="modal-close" type="button">&times;</button>
+        </div>
+        <form id="save-commute-form" class="modal-form">
+            <label>Commute Label
+                <input id="save-commute-name" type="text" placeholder="e.g. Home to College, Daily Work Commute" required maxlength="120">
+            </label>
+            <div class="form-row">
+                <label>Origin Name
+                    <input id="save-origin-name" type="text" required readonly>
+                </label>
+                <label>Destination Name
+                    <input id="save-dest-name" type="text" required readonly>
+                </label>
+            </div>
+            <div class="form-row">
+                <label>Arrival Deadline
+                    <input id="save-arrival-time" type="time" required>
+                </label>
+                <label>Safety Buffer
+                    <select id="save-buffer">
+                        <option value="5">5 min (Tight)</option>
+                        <option value="10">10 min (Standard)</option>
+                        <option value="15" selected>15 min (Recommended)</option>
+                        <option value="20">20 min (Cautious)</option>
+                    </select>
+                </label>
+            </div>
+            <label>Recurring Days
+                <select id="save-weekdays">
+                    <option value="MON,TUE,WED,THU,FRI">Weekdays (Monday - Friday)</option>
+                    <option value="ALL">Every Day (Monday - Sunday)</option>
+                    <option value="MON,WED,FRI">Mon / Wed / Fri</option>
+                    <option value="TUE,THU,SAT">Tue / Thu / Sat</option>
+                </select>
+            </label>
+            <div class="modal-actions">
+                <button type="button" id="cancel-save-modal" class="button button-outline">Cancel</button>
+                <button type="submit" class="button button-primary">Save Commute</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: Trip Feedback -->
+<div id="feedback-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
+        <div class="modal-header">
+            <h3>Trip Completion Feedback</h3>
+            <button id="close-feedback-modal" class="modal-close" type="button">&times;</button>
+        </div>
+        <form id="feedback-form" class="modal-form">
+            <input id="feedback-commute-id" type="hidden">
+            <p class="muted">Help personalize future departure recommendations by sharing how your journey went.</p>
+            <label>Did you reach your destination on time?
+                <select id="feedback-on-time" required>
+                    <option value="true">Yes, arrived before or on deadline</option>
+                    <option value="false">No, arrived late</option>
+                </select>
+            </label>
+            <label>Was the recommended departure time helpful?
+                <select id="feedback-useful" required>
+                    <option value="true">Yes, departure timing was accurate</option>
+                    <option value="false">No, needed more buffer time</option>
+                </select>
+            </label>
+            <label>Actual journey duration (approx minutes)
+                <input id="feedback-duration" type="number" min="1" max="300" placeholder="e.g. 35">
+            </label>
+            <label>Disruptions encountered
+                <input id="feedback-disruption" type="text" placeholder="e.g. Traffic jam at NAD flyover, Rain, None">
+            </label>
+            <div class="modal-actions">
+                <button type="button" id="cancel-feedback-modal" class="button button-outline">Cancel</button>
+                <button type="submit" class="button button-primary">Submit Feedback</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: Submit Community Road Hazard -->
+<div id="report-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
+        <div class="modal-header">
+            <h3>Report a Road Hazard</h3>
+            <button id="close-report-modal" class="modal-close" type="button">&times;</button>
+        </div>
+        <form id="report-form" class="modal-form">
+            <label>Hazard Category
+                <select id="report-type" required>
+                    <option value="Pothole">Pothole / Road Damage</option>
+                    <option value="Waterlogging">Waterlogging / Flooding</option>
+                    <option value="Road Obstruction">Road Obstruction / Fallen Tree</option>
+                    <option value="Broken Signal">Traffic Signal Failure</option>
+                    <option value="Reported Accident">Traffic Accident</option>
+                    <option value="Road Closure">Unauthorized / Temporary Road Closure</option>
+                    <option value="Other Hazard">Other Road Hazard</option>
+                </select>
+            </label>
+            <div class="form-row">
+                <label>Latitude
+                    <input id="report-lat" type="number" step="0.000001" min="-90" max="90" required>
+                </label>
+                <label>Longitude
+                    <input id="report-lon" type="number" step="0.000001" min="-180" max="180" required>
+                </label>
+                <button id="report-use-location" class="button button-small" type="button" style="align-self: flex-end;">Use my location</button>
+            </div>
+            <label>Description of conditions
+                <textarea id="report-desc" rows="3" placeholder="Describe the hazard, affected lane, and landmarks (10-500 chars)" minlength="10" maxlength="500" required></textarea>
+            </label>
+            <p class="source-line">Reports are stored as UNVERIFIED guest submissions and visible to fellow commuters.</p>
+            <div class="modal-actions">
+                <button type="button" id="cancel-report-btn" class="button button-outline">Cancel</button>
+                <button type="submit" class="button">Submit Road Report</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- NATIVE-FEEL MOBILE BOTTOM NAVIGATION BAR -->
+<nav class="mobile-bottom-nav" aria-label="Mobile Navigation">
+    <a href="#commute-planner-section" class="mobile-nav-item active" data-target="commute-planner-section">
+        <span class="mobile-nav-icon">⏱️</span>
+        <span class="mobile-nav-label">Plan</span>
+    </a>
+    <a href="#saved-commutes-section" class="mobile-nav-item" data-target="saved-commutes-section">
+        <span class="mobile-nav-icon">⭐</span>
+        <span class="mobile-nav-label">Commutes</span>
+    </a>
+    <a href="#map-section" class="mobile-nav-item" data-target="map-section">
+        <span class="mobile-nav-icon">🗺️</span>
+        <span class="mobile-nav-label">Map</span>
+    </a>
+    <a href="#hazards-section" class="mobile-nav-item" data-target="hazards-section">
+        <span class="mobile-nav-icon">⚠️</span>
+        <span class="mobile-nav-label">Hazards</span>
+    </a>
+    <a href="#sources-section" class="mobile-nav-item" data-target="sources-section">
+        <span class="mobile-nav-icon">⚙️</span>
+        <span class="mobile-nav-label">Status</span>
+    </a>
+</nav>
+
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script type="module" src="/js/app.js?v=2.1"></script>
+</body>
+</html>

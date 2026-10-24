@@ -1,0 +1,19 @@
+{
+  "name": "FlowCast 2.0 | Personal Commute Decision Assistant",
+  "short_name": "FlowCast",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#08101d",
+  "theme_color": "#0b1627",
+  "description": "Real-time commute decision assistant, weather-aware routing, and road disruption assessment for Visakhapatnam",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
