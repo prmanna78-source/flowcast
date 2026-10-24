@@ -23,15 +23,15 @@ function initTopDock() {
     const dockBtn = target.closest<HTMLButtonElement>("[data-dock-item]");
     if (dockBtn) {
       const text = dockBtn.textContent?.trim().toLowerCase() || "";
-      if (text.includes("product")) {
+      if (text.includes("plan") || text.includes("product")) {
         document.getElementById("commute-planner-section")?.scrollIntoView({ behavior: "smooth" });
-      } else if (text.includes("solutions")) {
+      } else if (text.includes("commute") || text.includes("solutions")) {
         document.getElementById("saved-commutes-section")?.scrollIntoView({ behavior: "smooth" });
-      } else if (text.includes("docs")) {
+      } else if (text.includes("map") || text.includes("docs")) {
         document.getElementById("map-section")?.scrollIntoView({ behavior: "smooth" });
-      } else if (text.includes("pricing")) {
+      } else if (text.includes("hazard") || text.includes("pricing")) {
         document.getElementById("hazards-section")?.scrollIntoView({ behavior: "smooth" });
-      } else if (text.includes("changelog")) {
+      } else if (text.includes("source") || text.includes("changelog")) {
         document.getElementById("sources-section")?.scrollIntoView({ behavior: "smooth" });
       }
     }

@@ -60,11 +60,11 @@ const ITEMS: readonly DockItem[] = [
 ];
 
 const MODERN_ITEMS: readonly DockItem[] = [
-  { id: "product", label: "Product", icon: <><path d="M8 1.9 14.1 5v6L8 14.1 1.9 11V5z" /><path d="M1.9 5 8 8.1 14.1 5M8 8.1v6" /></> },
-  { id: "solutions", label: "Solutions", icon: <><path d="M8 1.9 14.4 5.6 8 9.3 1.6 5.6z" /><path d="m2.6 8 5.4 3.1L13.4 8M2.6 10.7 8 13.8l5.4-3.1" /></> },
-  { id: "docs", label: "Docs", icon: <><path d="M3.4 2.4h5.4l3.8 3.8v7.4H3.4z" /><path d="M8.8 2.4v3.8h3.8M5.9 9h4.2M5.9 11.2h3" /></> },
-  { id: "pricing", label: "Pricing", icon: <><path d="M8.6 2.2H13v4.4l-6.6 6.6a1.2 1.2 0 0 1-1.7 0L2.2 10.5a1.2 1.2 0 0 1 0-1.7z" /><circle cx="10.6" cy="4.6" r=".9" /></> },
-  { id: "changelog", label: "Changelog", icon: <><circle cx="8" cy="8" r="5.9" /><path d="M8 4.6V8l2.4 1.5" /></> },
+  { id: "planner", label: "Commute Planner", icon: <><circle cx="8" cy="8" r="5.8" fill="none" stroke="currentColor" strokeWidth="1.2" /><path d="M8 4.6V8l2.4 1.5" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></> },
+  { id: "commutes", label: "My Commutes", icon: <><path d="M8 2.2l1.8 3.6 4 .6-2.9 2.8.7 4-3.6-1.9-3.6 1.9.7-4-2.9-2.8 4-.6z" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" /></> },
+  { id: "map", label: "Live Map", icon: <><path d="M2.5 4.5l3.5-2 4 2 3.5-2v9l-3.5 2-4-2-3.5 2z" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" /><path d="M6 2.5v9M10 4.5v9" fill="none" stroke="currentColor" strokeWidth="1.2" /></> },
+  { id: "hazards", label: "Road Hazards", icon: <><path d="M8 2.4 14.2 13.5H1.8z" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" /><path d="M8 6.2v3.6M8 11.5h.01" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></> },
+  { id: "sources", label: "Sources", icon: <><ellipse cx="8" cy="4" rx="5.5" ry="2" fill="none" stroke="currentColor" strokeWidth="1.2" /><path d="M2.5 4v4c0 1.1 2.5 2 5.5 2s5.5-.9 5.5-2V4" fill="none" stroke="currentColor" strokeWidth="1.2" /><path d="M2.5 8v4c0 1.1 2.5 2 5.5 2s5.5-.9 5.5-2V8" fill="none" stroke="currentColor" strokeWidth="1.2" /></> },
 ];
 
 /* every retro glyph is drawn on a 7x7 lattice of whole units so the icons stay
