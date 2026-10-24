@@ -12,6 +12,10 @@ let currentRoutes = [];
 let activeRouteIndex = 0;
 let incidentMarkers = [];
 let reportMarkers = [];
+let liveLocationMarker = null;
+let originMarker = null;
+let destinationMarker = null;
+let userLiveCoords = null;
 let currentPlannedPlan = null;
 
 function setStatus(element, status) {
@@ -117,6 +121,12 @@ async function searchLocations(kind) {
           };
           input.value = selectedLocations[kind].name;
           suggestions.innerHTML = '';
+          if (kind === 'origin') {
+            updateOriginPin(item.position.lat, item.position.lon, selectedLocations.origin.name);
+          } else if (kind === 'destination') {
+            updateDestinationPin(item.position.lat, item.position.lon, selectedLocations.destination.name);
+          }
+          if (map) map.flyTo({ center: [item.position.lon, item.position.lat], zoom: 13 });
         }
       });
     });
@@ -150,6 +160,8 @@ function initLandmarkChips() {
         }
       }
       $('destination-suggestions').innerHTML = '';
+      updateDestinationPin(lat, lon, name);
+      if (map) map.flyTo({ center: [lon, lat], zoom: 13 });
     });
   });
 }
@@ -332,15 +344,33 @@ function renderRouteOnMap(routeIndex) {
       type: 'line',
       source: 'route-line',
       layout: { 'line-join': 'round', 'line-cap': 'round' },
-      paint: { 'line-color': '#064e3b', 'line-width': 8, 'line-opacity': 0.7 }
+      paint: { 'line-color': '#1d4ed8', 'line-width': 10, 'line-opacity': 0.8 }
     });
     map.addLayer({
       id: 'route-line-core',
       type: 'line',
       source: 'route-line',
       layout: { 'line-join': 'round', 'line-cap': 'round' },
-      paint: { 'line-color': '#4ade80', 'line-width': 4 }
+      paint: { 'line-color': '#38bdf8', 'line-width': 5, 'line-opacity': 1 }
     });
+  }
+
+  // Ensure origin pin and destination pin are both rendered on the map
+  if (selectedLocations.origin) {
+    updateOriginPin(selectedLocations.origin.latitude, selectedLocations.origin.longitude, selectedLocations.origin.name);
+  } else if (coordinates.length > 0) {
+    updateOriginPin(coordinates[0][1], coordinates[0][0], 'Origin');
+  }
+
+  if (selectedLocations.destination) {
+    updateDestinationPin(selectedLocations.destination.latitude, selectedLocations.destination.longitude, selectedLocations.destination.name);
+  } else if (coordinates.length > 0) {
+    updateDestinationPin(coordinates[coordinates.length - 1][1], coordinates[coordinates.length - 1][0], 'Destination');
+  }
+
+  // Ensure live location pin is also displayed if available
+  if (userLiveCoords) {
+    updateLiveLocationPin(userLiveCoords.latitude, userLiveCoords.longitude);
   }
 
   const bounds = coordinates.reduce((b, coord) => b.extend(coord), new maplibregl.LngLatBounds(coordinates[0], coordinates[0]));
@@ -824,8 +854,99 @@ function openFeedbackModal(commuteId) {
 }
 
 // ============================================================================
-// MAP LAYERS & MARKERS
+// MAP LAYERS & PINS: LIVE LOCATION, ORIGIN & DESTINATION
 // ============================================================================
+
+function updateLiveLocationPin(lat, lon) {
+  if (!map || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
+  userLiveCoords = { latitude: lat, longitude: lon };
+
+  if (liveLocationMarker) {
+    liveLocationMarker.setLngLat([lon, lat]);
+  } else {
+    const el = document.createElement('div');
+    el.className = 'live-location-pin';
+    el.innerHTML = '<div class="pulse-ring"></div><div class="inner-dot"></div>';
+    el.title = 'My Live Location';
+    el.addEventListener('click', () => {
+      new maplibregl.Popup({ offset: 12 })
+        .setLngLat([lon, lat])
+        .setHTML('<div style="color:#0f172a;font-family:sans-serif;font-size:0.85rem;padding:4px;"><strong>📍 My Live Location</strong><br><small style="color:#0284c7;font-weight:600;">GPS signal active</small></div>')
+        .addTo(map);
+    });
+
+    liveLocationMarker = new maplibregl.Marker({ element: el })
+      .setLngLat([lon, lat])
+      .addTo(map);
+  }
+}
+
+function updateOriginPin(lat, lon, name) {
+  if (!map || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
+  if (originMarker) originMarker.remove();
+
+  const el = document.createElement('div');
+  el.className = 'custom-map-pin origin-map-pin';
+  const label = name ? name.split(',')[0].trim() : 'Start';
+  el.innerHTML = `
+    <div class="pin-badge origin-badge">
+      <span class="pin-icon">🟢</span>
+      <span class="pin-text">${label}</span>
+    </div>
+    <div class="pin-arrow origin-arrow"></div>
+  `;
+
+  const popup = new maplibregl.Popup({ offset: 25 })
+    .setHTML(`<div style="color:#0f172a;font-family:sans-serif;font-size:0.85rem;padding:4px;"><strong>🟢 Origin (Start)</strong><br><span style="color:#334155;">${name || 'Start Location'}</span></div>`);
+
+  originMarker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+    .setLngLat([lon, lat])
+    .setPopup(popup)
+    .addTo(map);
+}
+
+function updateDestinationPin(lat, lon, name) {
+  if (!map || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
+  if (destinationMarker) destinationMarker.remove();
+
+  const el = document.createElement('div');
+  el.className = 'custom-map-pin dest-map-pin';
+  const label = name ? name.split(',')[0].trim() : 'Destination';
+  el.innerHTML = `
+    <div class="pin-badge dest-badge">
+      <span class="pin-icon">🏁</span>
+      <span class="pin-text">${label}</span>
+    </div>
+    <div class="pin-arrow dest-arrow"></div>
+  `;
+
+  const popup = new maplibregl.Popup({ offset: 25 })
+    .setHTML(`<div style="color:#0f172a;font-family:sans-serif;font-size:0.85rem;padding:4px;"><strong>🏁 Destination</strong><br><span style="color:#334155;">${name || 'Destination Location'}</span></div>`);
+
+  destinationMarker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+    .setLngLat([lon, lat])
+    .setPopup(popup)
+    .addTo(map);
+}
+
+function initLiveLocationTracking() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      updateLiveLocationPin(pos.coords.latitude, pos.coords.longitude);
+    },
+    err => console.log('Location status:', err.message),
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+  );
+
+  navigator.geolocation.watchPosition(
+    pos => {
+      updateLiveLocationPin(pos.coords.latitude, pos.coords.longitude);
+    },
+    null,
+    { enableHighAccuracy: true, maximumAge: 15000 }
+  );
+}
 
 function renderIncidents() {
   if (!map) return;
@@ -1026,12 +1147,15 @@ async function init() {
       requestDeviceLocation(
         pos => {
           selectedLocations.origin = {
-            name: 'Current Location',
+            name: 'My Live Location',
             latitude: pos.latitude,
             longitude: pos.longitude
           };
-          $('origin-query').value = 'Current Location';
+          $('origin-query').value = 'My Live Location';
           $('origin-suggestions').innerHTML = '';
+          updateLiveLocationPin(pos.latitude, pos.longitude);
+          updateOriginPin(pos.latitude, pos.longitude, 'My Live Location');
+          if (map) map.flyTo({ center: [pos.longitude, pos.latitude], zoom: 14 });
         },
         err => alert(err)
       );
@@ -1128,6 +1252,7 @@ async function init() {
         map.on('load', () => {
           renderIncidents();
           renderCommunityReports();
+          initLiveLocationTracking();
         });
       }
     }

@@ -11,7 +11,7 @@
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="icon" type="image/svg+xml" href="/icon.svg">
     <link rel="apple-touch-icon" href="/icon.svg">
-    <link rel="stylesheet" href="/css/app.css?v=2.1">
+    <link rel="stylesheet" href="/css/app.css?v=2.2">
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
     <title>FlowCast 2.0 | Personal Commute Decision Assistant</title>
 </head>
@@ -239,7 +239,9 @@
             <div><strong>Map provider status</strong><p id="map-status">Loading configured map…</p></div>
         </div>
         <div class="map-legend">
-            <span><span class="legend-dot dot-route"></span> Calculated Route</span>
+            <span><span class="legend-dot dot-live-loc"></span> My Live Location</span>
+            <span><span class="legend-dot dot-dest"></span> Destination Pin</span>
+            <span><span class="legend-dot dot-route"></span> Navigation Route</span>
             <span><span class="legend-dot dot-traffic"></span> Live Traffic Flow</span>
             <span><span class="legend-dot dot-incident"></span> Confirmed Incidents</span>
             <span><span class="legend-dot dot-hazard"></span> Community Hazards</span>
@@ -454,6 +456,6 @@
 </nav>
 
 <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
-<script type="module" src="/js/app.js?v=2.1"></script>
+<script type="module" src="/js/app.js?v=2.2"></script>
 </body>
 </html>

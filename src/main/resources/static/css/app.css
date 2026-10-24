@@ -160,10 +160,102 @@ body { margin: 0; background: #08101d; }
   border-radius: 50%;
   margin-right: 0.35rem;
 }
-.dot-traffic { background: #38bdf8; }
+.dot-live-loc { background: #0284c7; box-shadow: 0 0 6px #38bdf8; }
+.dot-dest { background: #dc2626; box-shadow: 0 0 6px #f87171; }
+.dot-route { background: #38bdf8; box-shadow: 0 0 6px #2563eb; }
+.dot-traffic { background: #22c55e; }
 .dot-incident { background: #f97316; }
 .dot-hazard { background: #facc15; }
-.dot-route { background: #4ade80; }
+
+/* ==========================================================================
+   LIVE LOCATION & DESTINATION CUSTOM MAP PINS
+   ========================================================================== */
+
+/* Live GPS Location Pulsing Pin */
+.live-location-pin {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.live-location-pin .inner-dot {
+  width: 14px;
+  height: 14px;
+  background: #0284c7;
+  border: 2.5px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(2, 132, 199, 0.9), 0 2px 6px rgba(0, 0, 0, 0.5);
+  z-index: 2;
+  position: relative;
+}
+.live-location-pin .pulse-ring {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.4);
+  animation: livePulse 2s infinite ease-out;
+  z-index: 1;
+}
+@keyframes livePulse {
+  0% { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* Custom Map Pins for Origin & Destination */
+.custom-map-pin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transform: translate(0, 0);
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.custom-map-pin:hover {
+  transform: scale(1.08) translateY(-3px);
+}
+.pin-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  white-space: nowrap;
+}
+.pin-arrow {
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+}
+
+/* Origin Pin (Emerald / Teal / Cyan) */
+.origin-badge {
+  background: #059669;
+  color: #ffffff;
+  border: 1.5px solid #34d399;
+  box-shadow: 0 0 14px rgba(52, 211, 153, 0.45), 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+.origin-arrow {
+  border-top: 7px solid #059669;
+}
+
+/* Destination Pin (Crimson / Coral / Finish) */
+.dest-badge {
+  background: #dc2626;
+  color: #ffffff;
+  border: 1.5px solid #f87171;
+  box-shadow: 0 0 14px rgba(248, 113, 113, 0.5), 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+.dest-arrow {
+  border-top: 7px solid #dc2626;
+}
 
 .metric-empty { color: #8ea1bb; padding: 0.75rem 0; font-size: 0.9rem; }
 .incident-scroll { max-height: 250px; overflow-y: auto; padding-right: 0.5rem; }
